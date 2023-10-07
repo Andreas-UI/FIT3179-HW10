@@ -1,0 +1,178 @@
+{
+    "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+    "width": "container",
+    "height": 500,
+    "title": "Type of Road Accident in Every Month Between 2000 and 2005",
+    "params": [
+        {
+            "name": "year_selection",
+            "value": 2000,
+            "bind": {
+                "input": "range",
+                "min": 2000,
+                "max": 2005,
+                "step": 1,
+                "name": "Year: "
+            }
+        },
+        {
+            "name": "accident_checkbox",
+            "bind": {
+                "input": "select",
+                "options": [
+                    null,
+                    "Collision with a fixed object",
+                    "Collision with vehicle",
+                    "Fall from or in moving vehicle",
+                    "No collision and no object struck",
+                    "Other accident",
+                    "Struck Pedestrian",
+                    "Struck animal",
+                    "Vehicle overturned (no collision)",
+                    "collision with some other object"
+                ],
+                "labels": [
+                    "Show All",
+                    "Collision with a fixed object",
+                    "Collision with vehicle",
+                    "Fall from or in moving vehicle",
+                    "No collision and no object struck",
+                    "Other accident",
+                    "Struck Pedestrian",
+                    "Struck animal",
+                    "Vehicle overturned (no collision)",
+                    "collision with some other object"
+                ],
+                "name": "Accident Check: "
+            }
+        }
+    ],
+    "data": {
+        "url": "https://raw.githubusercontent.com/Andreas-UI/FIT3179-HW9/main/data/ACCIDENT.csv",
+        "format": {
+            "type": "csv"
+        }
+    },
+    "transform": [
+        {
+            "filter": {
+                "timeUnit": "year",
+                "field": "ACCIDENTDATE",
+                "equal": "year_selection"
+            }
+        },
+        {
+            "filter": "accident_checkbox == null || datum['Accident Type Desc'] === accident_checkbox"
+        },
+        {
+            "joinaggregate": [
+                {
+                    "op": "count",
+                    "field": "*",
+                    "as": "TotalAccident"
+                }
+            ]
+        },
+        {
+            "calculate": "datum.TotalAccident/12",
+            "as": "meanAccident"
+        },
+        {
+            "calculate": "'There were average of ' + format(datum.meanAccident, '.0f') + ' accidents in ' + year(datum.ACCIDENTDATE)",
+            "as": "meanAccidentText"
+        }
+    ],
+    "layer": [
+        {
+            "selection": {
+                "accident_selection": {
+                    "type": "multi",
+                    "fields": [
+                        "Accident Type Desc"
+                    ],
+                    "bind": "legend",
+                    "value": null
+                }
+            },
+            "mark": "bar",
+            "encoding": {
+                "x": {
+                    "field": "ACCIDENTDATE",
+                    "timeUnit": "month",
+                    "type": "ordinal",
+                    "title": "Month"
+                },
+                "y": {
+                    "aggregate": "count",
+                    "type": "quantitative",
+                    "field": "ACCIDENT_NO",
+                    "title": "Number of Accidents"
+                },
+                "color": {
+                    "field": "Accident Type Desc",
+                    "title": "Accident"
+                },
+                "opacity": {
+                    "condition": {
+                        "selection": "accident_selection",
+                        "value": 0.8
+                    },
+                    "value": 0.2
+                },
+                "tooltip": [
+                    {
+                        "field": "Accident Type Desc",
+                        "title": "Accident Type"
+                    },
+                    {
+                        "field": "ACCIDENT_NO",
+                        "aggregate": "count",
+                        "title": "Count"
+                    },
+                    {
+                        "field": "ACCIDENTDATE",
+                        "title": "Year",
+                        "timeUnit": "year"
+                    },
+                    {
+                        "field": "ACCIDENTDATE",
+                        "title": "Month",
+                        "timeUnit": "month"
+                    }
+                ]
+            }
+        },
+        {
+            "mark": "rule",
+            "encoding": {
+                "y": {
+                    "type": "quantitative",
+                    "field": "meanAccident",
+                    "title": "Number of Accidents"
+                },
+                "size": {
+                    "value": 1
+                },
+                "opacity": {"value": 0.2}
+            }
+        },
+        {
+            "mark": {
+                "type": "text",
+                "align": "center",
+                "baseline": "line-top",
+                "dy": -12,
+                "fontWeight": "lighter"
+            },
+            "encoding": {
+                "y": {
+                    "field": "meanAccident",
+                    "type": "quantitative"
+                },
+                "text": {
+                    "field": "meanAccidentText"
+                }
+            }
+        }
+    ]
+}
